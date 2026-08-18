@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Shared with the rest of the organisation. Two sibling repos were found publishing
+  # the operator's home paths while their own checks reported ok, so the gate runs from
+  # one canonical source rather than a per-repo copy.
+  no-instance-data:
+    uses: katalalab/.github/.github/workflows/instance-data-gate.yml@main
+
+  test:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: python -m pip install --quiet pytest
+
+      # The suite existed and passed locally but nothing ran it on a push, so a
+      # regression would have been visible only to whoever happened to run it by hand.
+      - name: Run tests
+        run: python -m pytest test_codecs.py -q
