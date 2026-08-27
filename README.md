@@ -54,14 +54,18 @@ python bench.py --codec deflate --material text --note "chain_limit を 256 に"
 `bench.py` は往復不一致を即 FAIL にする。可逆コーデックの検証はこれが全て。
 `zlib` `lzma` `bz2` を同じ表に並べてあるので、自作がどこに立っているかが毎回出る。
 
-### ベースライン（2026-08-15）
+### ベースライン（2026-08-28）
 
 | 素材 | 自作 | zlib | lzma |
 | --- | --- | --- | --- |
-| text 200KB | deflate 0.299 | 0.284 | 0.254 |
-| source 200KB | deflate 0.018 | 0.017 | 0.005 |
-| image_raw 48KB | **ycocg_png 0.325** / png_like 0.424 | 0.915 | 0.805 |
+| text 200KB | deflate 0.294 | 0.284 | 0.254 |
+| source 200KB | deflate 0.017 | 0.017 | 0.005 |
+| image_raw 48KB | **ycocg_png 0.320** / png_like 0.430 | 0.915 | 0.805 |
 | audio_le16 48KB | **flac_like 0.464** | 0.938 | 0.625 |
+
+Current Mac / Python 3.12 で 11 round-trip tests を通した同一 run の値。random data は約 1.001 で改善せず、層追加が効く領域と効かない領域を分離できる。
+
+同じ commit `5b93e37` を6ノード（macOS 2台、Windows 4台、Python 3.12/3.13）で再実行し、全ノードで11 testsと全圧縮比が一致した。速度は `ycocg_png` が encode 0.13–0.39 MB/s / decode 0.80–2.53 MB/s、`flac_like` が encode 0.05–0.22 MB/s / decode 0.44–1.77 MB/s。したがって比率は再現可能だが、Python 実装の速度を単一ホスト値で代表させない。
 
 汎用同士（text / source）は構造が同じなので数 % 差に収まる。桁で開くのは
 素材の形を知っている合成コーデックの側で、lzma を image で 2.5 倍、
